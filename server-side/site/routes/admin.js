@@ -7,13 +7,14 @@ var fileService = require('./upload.js');
 var Server = mongo.Server,
     Db = mongo.Db,
     ObjectID = mongo.ObjectID;
- 
+
 var emailServer  = emailjs.server.connect({
-   user:    "supportemail@domain.com", 
-   password:"supportpwd", 
-   host:    "smtp.gmail.com", 
-   ssl:     true
-});
+	   user:    process.env.MAIL_USER,
+	   password:process.env.MAIL_PASSWORD,
+	   host:    process.env.MAIL_SMTP,
+	   ssl:     true,
+
+	});
 
 var MongoClient = mongo.MongoClient;
 var db = null;
@@ -37,7 +38,7 @@ exports.openStudy = function(req, res) {
     var token = req.body.token;
     db.collection('studies', function(err, collection) {
         collection.findOne({'token':token}, function(err, study) {
-            collection.update( {'_id' : study._id}, 
+            collection.update( {'_id' : study._id},
                      {'$set' : {'status' : 'open'}});
             res.send({status:'ok'});
         });
@@ -48,7 +49,7 @@ exports.closeStudy = function(req, res) {
     var token = req.body.token;
     db.collection('studies', function(err, collection) {
         collection.findOne({'token':token}, function(err, study) {
-            collection.update( {'_id' : study._id}, 
+            collection.update( {'_id' : study._id},
                      {'$set' : {'status' : 'closed'}});
             res.send({status:'ok'});
         });
@@ -61,7 +62,7 @@ exports.download = function(req, res ) {
 
         // get surveyId, then votes matching that.
     db.collection('studies', function(err, studyCollection) {
-        studyCollection.findOne({'token':token}, function(err, study) 
+        studyCollection.findOne({'token':token}, function(err, study)
         {
             if( study && study.studyKind == "survey" )
             {
@@ -87,11 +88,11 @@ exports.download = function(req, res ) {
                     voteCollection.find({'studyId':study._id}).toArray(function(err, items) {
 
                         var fileIds = items.map( function(elem)
-                            { 
+                            {
                                 if( elem.files && elem.files.length > 0 )
                                     return elem.files[0].fileId;
                                 else
-                                    return null; 
+                                    return null;
                             }).filter( function(elem){ return elem != null; });
 
                         console.log( fileIds );
@@ -112,7 +113,7 @@ exports.download = function(req, res ) {
                             });
 
                             // Signal that archive is done.
-                            archive.finalize(function(err, written) 
+                            archive.finalize(function(err, written)
                             {
                                 if (err) { throw err; }
                                 console.log(written + ' total bytes written');
@@ -120,7 +121,7 @@ exports.download = function(req, res ) {
                         });
 
                     });
-                });                
+                });
             }
             else
             {
@@ -138,18 +139,18 @@ exports.assignWinner = function(req, res ) {
 
     // get surveyId, then votes matching that.
     db.collection('studies', function(err, studyCollection) {
-        studyCollection.findOne({'token':token}, function(err, study) 
+        studyCollection.findOne({'token':token}, function(err, study)
         {
             if( study )
             {
                 db.collection('votes', function(err, voteCollection) {
-                    voteCollection.find({'studyId': study._id }).toArray(function(err, items) 
+                    voteCollection.find({'studyId': study._id }).toArray(function(err, items)
                     {
                         console.log(err);
 
                         var pool = _.uniq(items, function(item,key,a) {
                                 return item.email;
-                            }).filter( function(element, index, array) 
+                            }).filter( function(element, index, array)
                             {
                                 try
                                 {
@@ -210,7 +211,7 @@ exports.notifyParticipant = function(req, res) {
     var msg = {
             text: "Thank you for participating in our research study.\n" +
                   redeem + "\n"
-            , 
+            ,
             from:    "<support@checkbox.io>",
             to:      "<"+ email +">",
             //to: "<cscorley@gmail.com>",
@@ -218,9 +219,9 @@ exports.notifyParticipant = function(req, res) {
             subject: "checkbox.io: study winner"
         };
 
-    emailServer.send(msg, 
-        function(err, message) 
-        { 
+    emailServer.send(msg,
+        function(err, message)
+        {
             console.log(err || message);
             if( err )
             {
@@ -234,4 +235,3 @@ exports.notifyParticipant = function(req, res) {
     );
 
 }
-

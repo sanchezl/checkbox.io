@@ -3,11 +3,11 @@ var crypto = require('crypto');
 var emailjs = require('emailjs/email');
 var models = require('./studyModel.js');
 
- 
+
 var Server = mongo.Server,
     Db = mongo.Db,
     BSON = mongo.BSONPure;
- 
+
 var MongoClient = mongo.MongoClient;
 var db = null;
 MongoClient.connect("mongodb://"+process.env.MONGO_USER+":"+process.env.MONGO_PASSWORD+"@"+process.env.MONGO_IP+":27017/site?authSource=admin", function(err, authdb) {
@@ -17,8 +17,8 @@ MongoClient.connect("mongodb://"+process.env.MONGO_USER+":"+process.env.MONGO_PA
 });
 
 var emailServer  = emailjs.server.connect({
-   user:    process.env.MAIL_USER, 
-   password:process.env.MAIL_PASSWORD, 
+   user:    process.env.MAIL_USER,
+   password:process.env.MAIL_PASSWORD,
    host:    process.env.MAIL_SMTP, 
    ssl:     true,
 
@@ -26,7 +26,7 @@ var emailServer  = emailjs.server.connect({
 
 exports.createStudy = function(req, res) {
 
-    var invitecode = req.body.invitecode; 
+    var invitecode = req.body.invitecode;
     var studyKind = req.body.studyKind;
 
     if( invitecode != "RESEARCH" )
@@ -37,12 +37,12 @@ exports.createStudy = function(req, res) {
 
     basicCreate( req, res, studyKind ).onCreate( function(study)
     {
-    	db.collection('studies', function(err, collection) 
+    	db.collection('studies', function(err, collection)
     	{
     		if( err )
     			console.log( err );
 
-        	collection.insert(study, {safe:true}, function(err, result) 
+        	collection.insert(study, {safe:true}, function(err, result)
         	{
         		console.log( err || "Study created: " + study._id );
 
@@ -70,12 +70,12 @@ exports.createStudy = function(req, res) {
 
 
 
-function basicCreate(req, res, kind) 
+function basicCreate(req, res, kind)
 {
 	console.log( kind );
     this.onCreate = function ( onReady )
     {
-	    crypto.randomBytes(48, function(ex, buf) 
+	    crypto.randomBytes(48, function(ex, buf)
 	    {
 	        // alternative: https://github.com/broofa/node-uuid
 	        var token = buf.toString('hex');
@@ -102,10 +102,10 @@ function basicCreate(req, res, kind)
 }
 
 function sendStudyEmail (study) {
-    emailServer.send( study.getMessage(), 
-        function(err, message) 
-        { 
-            console.log(err || message); 
+    emailServer.send( study.getMessage(),
+        function(err, message)
+        {
+            console.log(err || message);
         }
     );
 }
